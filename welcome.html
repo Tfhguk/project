@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Этапы — Учёт техники</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449;
+    --accent:#38bdf8; --green:#22c55e; --red:#ef4444;
+    --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    background:radial-gradient(1200px 600px at 50% -10%,#1e3a5f 0%,var(--bg) 55%);
+    font-family:"Segoe UI",system-ui,sans-serif;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px; background:rgba(15,23,42,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10;
+    gap:12px; flex-wrap:wrap;
+  }
+  header h1{font-size:1.1rem; margin:0;}
+  .user-info{display:flex; align-items:center; gap:10px; font-size:.85rem;}
+  .user-info .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#0ea5e9,#8b5cf6);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.8rem;
+  }
+  .btn{
+    border:1px solid var(--border); background:linear-gradient(180deg,#334155,#263244);
+    color:var(--text); font-weight:600; padding:11px 16px; border-radius:10px;
+    cursor:pointer; font-size:.9rem; transition:all .15s;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:linear-gradient(180deg,#0ea5e9,#0284c7); border-color:var(--accent);}
+
+  main{max-width:1000px; margin:0 auto; padding:32px 24px;}
+  .hello{margin-bottom:28px;}
+  .hello h2{margin:0 0 6px; font-size:1.5rem;}
+  .hello p{color:var(--muted); margin:0; font-size:.95rem;}
+
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:16px;
+  }
+  .step{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--border); border-radius:16px;
+    padding:22px; display:flex; flex-direction:column; gap:10px;
+    text-decoration:none; color:var(--text);
+    transition:transform .15s, border-color .2s, box-shadow .2s;
+  }
+  .step:hover{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(56,189,248,.12);
+    transform:translateY(-2px);
+  }
+  .step h3{margin:0; font-size:1.05rem;}
+  .step p{margin:0; color:var(--muted); font-size:.85rem; line-height:1.5; flex:1;}
+  .steps.local-tools{display:flex;flex:none;flex-wrap:wrap;align-items:flex-start;}
+  #loadError{position:fixed;right:18px;bottom:18px;z-index:20;width:min(440px,calc(100vw - 36px));padding:16px;background:#302235;border:1px solid #fb7185;border-radius:12px;box-shadow:0 8px 32px #0008;}
+  #loadError p{margin:8px 0 12px;overflow-wrap:anywhere;}
+  .step[aria-disabled="true"]{opacity:.5;cursor:default;transform:none;box-shadow:none;border-color:var(--border);}
+  html,body{height:100%;overflow:hidden}body{height:100dvh;display:flex;flex-direction:column}header{flex:none;padding:10px 18px}main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;padding:18px;gap:12px;overflow:hidden}.hello{margin:0;flex:none}.hello h2{font-size:1.25rem}.hello p{font-size:.82rem}.steps{flex:1;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:10px}.step{min-height:0;padding:15px;gap:7px}.step h3{font-size:1rem}.step p{font-size:.8rem}.step .go{margin:0}
+  @media(max-width:550px){header{padding:8px 12px}header h1{font-size:.85rem}main{padding:12px;gap:9px}.steps{grid-template-columns:minmax(0,1fr);gap:8px}.step{padding:11px}.step h3{font-size:.9rem}.step p{font-size:.75rem}}
+  @media(max-height:500px){header{padding:5px 12px}header h1{font-size:.85rem}.btn{padding:6px 10px}main{padding:9px;gap:7px}.hello h2{font-size:1rem}.hello p{font-size:.7rem}.step{padding:9px;gap:4px}.step h3{font-size:.85rem}.step p{font-size:.7rem}.step .icon{font-size:1rem}}
+  @media(max-width:600px){
+    main{padding:20px 16px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 Учёт техники — этапы</h1>
+  <a class="btn" href="charging.html" style="text-decoration:none">Симуляция зарядной станции</a>
+  <a class="btn" href="truck.html" style="text-decoration:none">3D симуляция</a>
+  <a class="btn" href="ar.html" style="text-decoration:none">AR / Проектор</a>
+  <div class="user-info">
+    <div class="avatar" id="userAvatar">?</div>
+    <div>
+      <div id="userName" style="font-weight:600;"></div>
+      <div id="userRole" style="color:var(--muted); font-size:.75rem;"></div>
+    </div>
+    <button class="btn" id="logoutBtn">Выйти</button>
+  </div>
+</header>
+
+<main aria-busy="true">
+  <div class="hello">
+    <h2 id="greeting" hidden>Здравствуйте, <span id="helloName"></span></h2>
+    <p role="status">Загружаем аккаунт…</p>
+  </div>
+  <div class="steps"></div>
+</main>
+<div id="loadError" role="alert" hidden><strong>Не удалось загрузить аккаунт</strong><p id="loadErrorText"></p><button class="btn" id="retryLoad">Повторить загрузку</button></div>
+
+<script src="cloud-config.js"></script>
+<script src="cloud-client.js"></script>
+<script src="auth.js"></script>
+<script>
+(async function(){
+  const main=document.querySelector("main"),steps=document.querySelector(".steps");
+  document.getElementById("retryLoad").onclick=()=>location.reload();
+  document.getElementById("logoutBtn").onclick=async()=>{
+    try{if(globalThis.AppCloud?.configured)await AppCloud.logout();}
+    catch(error){/* Exit still works when the server is unavailable. */}
+    finally{localStorage.removeItem("app_session_v1");location.href="login.html";}
+  };
+  function showAccount(profile,role){
+    for(const id of ["userName","helloName"])document.getElementById(id).textContent=profile.name;
+    document.getElementById("userAvatar").textContent=profile.name.slice(0,1);
+    document.getElementById("userRole").textContent=role;
+    document.getElementById("greeting").hidden=false;
+  }
+  try{
+    if(!globalThis.AppCloud)throw Error("Не загружены файлы приложения. Проверьте соединение и повторите загрузку.");
+    if(AppCloud.configured){
+      if(!AppCloud.session()){location.replace("login.html");return;}
+      const profile=await AppCloud.me();
+      if(profile.registration_status!=="ready"&&(AppCloud.routesEnabled||profile.registration_status!=="routes")){location.replace("setup.html");return;}
+      showAccount(profile,!AppCloud.routesEnabled&&profile.registration_status==="routes"?"Основные этапы настроены":AppCloud.labels[profile.registration_status]);
+      document.querySelector(".hello p").textContent=AppCloud.routesEnabled?"Настройка завершена. Можно изменять свой гараж, зоны, карту глубины и траектории.":"Можно изменять полигон, свой гараж и зоны. Раздел «Траектории» временно отключён.";
+      for(const [stage,title,text] of [["polygon","Полигон","Выберите готовый полигон или создайте новый: обведите границу точками и сохраните."],["garage","Мой гараж","Добавьте машины, выберите для каждой свободный ID и скачайте её метку."],["zones","Рабочие зоны","Обведите область движения, а внутри неё — склад, зарядку и добычу. Сохраните зоны."],["routes","Траектории и глубины","Постройте пути, выберите технику, отредактируйте точки и сохраните."]]){
+        const link=document.createElement("a");link.className="step";link.href="setup.html?step="+stage;
+        const disabled=stage==="routes"&&!AppCloud.routesEnabled;
+        if(disabled){link.removeAttribute("href");link.setAttribute("aria-disabled","true");}
+        const heading=document.createElement("h3");heading.textContent=title;
+        const description=document.createElement("p");description.textContent=disabled?"Временно отключено.":text;link.append(heading,description);steps.append(link);
+      }
+      const robotLink=document.createElement("a");robotLink.className="step";robotLink.href="robots-setup.html";
+      const robotHeading=document.createElement("h3");robotHeading.textContent="Подключение роботов ESP32";
+      const robotDescription=document.createElement("p");robotDescription.textContent="Настройка настоящих роботов, локальных токенов и персональной прошивки прямо на сайте.";
+      robotLink.append(robotHeading,robotDescription);steps.append(robotLink);
+    }else{
+      const session=globalThis.AppAuth?.loadSession();
+      if(!session?.login){location.replace("login.html");return;}
+      showAccount(session,session.role);
+      document.querySelector(".hello p").textContent="Локальный деморежим. Выберите инструмент.";
+      steps.classList.add("local-tools");
+      for(const [href,title] of [["markers.html","Арукомаркеры"],["polygon.html","Границы полигона"]]){
+        const link=document.createElement("a");link.href=href;link.className="btn";link.textContent=title;steps.append(link);
+      }
+    }
+  }catch(error){
+    steps.replaceChildren();document.querySelector(".hello p").textContent="Загрузка остановлена. Повторите попытку.";
+    document.getElementById("loadErrorText").textContent=error.message;
+    document.getElementById("loadError").hidden=false;
+  }finally{main.setAttribute("aria-busy","false");}
+})();
+</script>
+</body>
+</html>

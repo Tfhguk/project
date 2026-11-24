@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Настройка полигона и техники</title><link rel="stylesheet" href="setup.css">
+<script src="cloud-config.js" defer></script><script src="cloud-client.js" defer></script>
+<script src="polygon-geometry.js" defer></script><script src="setup-geometry.js" defer></script>
+<script src="aruco_dict_4x4_50.js" defer></script><script src="aruco.js" defer></script>
+<script src="node_modules/jspdf/dist/jspdf.umd.min.js" defer></script>
+<script src="setup-export.js" defer></script><script src="firmware-ui.js" defer></script><script src="robot-cloud-ui.js" defer></script><script src="robot-firmware-setup.js" defer></script>
+<script src="setup.js" defer></script><link rel="stylesheet" href="firmware.css"></head>
+<body><header><a href="welcome.html">← Главная</a><strong>Настройка рабочего пространства</strong><span id="account"></span><button id="logout">Выйти</button></header>
+<aside id="workflowSidebar" aria-label="Этапы и действия"><nav id="steps" aria-label="Этапы регистрации"></nav><div id="sidebarActions"></div></aside>
+<main>
+<div class="heading"><div><p id="registrationStatus" class="muted"></p><h1 id="title">Загрузка…</h1><p id="description"></p></div><span id="saveState" class="badge"></span></div>
+<section id="polygonTools" class="panel" hidden><div class="controls">
+<label>Полигоны и пресеты<select id="polygonSelect"><option value="" disabled hidden>Выберите полигон</option></select></label>
+<button id="newPolygon">Новый полигон</button><button id="copyPolygon">Создать редактируемую копию</button><button id="showFullPolygon" disabled>Показать полный полигон</button><button id="deletePolygon" hidden>Удалить мой пресет</button>
+</div>
+<p class="muted">У каждого полигона отдельные гараж, зоны и настройки. «Далее» открывает сохранённый проект; если владелец обновил пресет, загружаются его новые зоны. ID 0–49 независимы между полигонами. Чужой оригинал изменить нельзя.</p><div id="projectList" aria-label="Мои проекты полигонов"></div><div id="projectPager" class="pager"></div><button id="reloadPreset" hidden>Загрузить оригинал заново</button></section>
+<section id="garage" hidden><div class="garage-heading"><h2 id="garageTitle">Мой гараж</h2><div class="garage-actions"><button id="openEquipmentForm">Добавить технику</button><button id="deleteGarage" class="danger">Удалить мой гараж</button></div></div><div id="equipmentCreate" class="panel"><form id="equipmentForm" class="controls">
+<label>Название<input id="equipmentName" maxlength="100" required placeholder="Например, Самосвал 1"></label>
+<label>Тип<select id="equipmentType"><option value="truck">Самосвал</option><option value="bulldozer">Бульдозер</option><option value="loader">Погрузчик</option><option value="charging_station">Зарядная станция</option><option value="other">Иное</option></select></label>
+<label>ID<input id="equipmentMarkerId" type="number" min="0" max="49" step="1" placeholder="Автоматически"></label>
+<button type="submit" class="primary">Добавить технику</button><button type="button" id="cancelEquipmentForm">Отмена</button></form><p class="muted">Укажите ID от 0 до 49 или оставьте поле пустым для автоматического выбора. Занятые номера использовать нельзя.</p></div><div id="equipmentList" class="cards"></div><div id="garagePager" class="pager"></div></section>
+<section id="drawingLauncher" class="panel" hidden><div class="controls"><button id="openEditor" class="primary">Полигон</button><span id="drawingSummary" class="muted"></span></div><p class="muted">Редактор открывается в отдельном окне. Рисунок целиком помещается на экране.</p></section>
+<div id="editorBackdrop" hidden></div>
+<section id="editorWindow" class="editor-window" role="dialog" aria-modal="false" aria-labelledby="editorTitle" hidden>
+<div class="window-heading"><h2 id="editorTitle">Полигон</h2><label id="polygonNameLabel">Название полигона<input id="polygonName" maxlength="100" required placeholder="Введите название"></label><button id="renamePolygon" hidden>Сохранить название</button><button id="toggleProperties" aria-controls="editorProperties" aria-expanded="false">Свойства</button><button id="closeEditor" aria-label="Закрыть редактор">К списку полигонов</button></div>
+<section id="editor"><div id="editorToolbar" class="controls panel">
+<label>Основа<select id="background"><option value="grid">Пустое поле</option><option value="camera">Камера</option></select></label>
+<button id="freezeCamera" hidden>Зафиксировать кадр</button><button id="resumeCamera" hidden>Продолжить камеру</button>
+<button id="previewFromEditor" hidden>Показать полный полигон</button>
+<label id="zoneKindLabel" hidden>Тип зоны<select id="zoneKind"><option value="transport">Транспортная зона — где можно ездить</option><option value="warehouse">Склад</option><option value="charging">Зарядная станция</option><option value="mining">Зона добычи</option></select></label>
+<button id="newShape" hidden>Новая зона</button><button id="autoRoutes" class="primary" hidden>Построить автоматически</button></div>
+<div id="editorBody"><aside id="drawingTools" aria-label="Инструменты рисования" hidden><h3>Редактирование</h3><div id="drawingToolsSlot"></div></aside><div class="workspace"><div class="canvas-panel"><div class="canvas-fit" id="canvasFit"><div class="stage"><video id="camera" autoplay playsinline muted hidden></video><canvas id="frozen" width="1000" height="700" hidden></canvas>
+<svg id="map" viewBox="0 0 1000 700" role="img" tabindex="0" aria-label="Редактор: нажмите для вершины, перетащите вершину или нажмите на ребро для вставки."></svg></div></div>
+<p class="muted" id="editorHint"></p></div>
+<div id="editorPropertiesSlot"><aside class="panel" id="editorProperties"><div class="properties-heading"><h2 id="listTitle">Вершины</h2><button id="closeProperties" aria-label="Закрыть свойства">✕</button></div><div id="propertiesTabs" class="controls"><button data-pane="shapes">Фигуры</button><button data-pane="vertices">Точки</button><button data-pane="properties">Параметры</button></div><div id="shapeList"></div><div id="shapePager" class="pager"></div><div id="vertexList"></div><div id="vertexPager" class="pager"></div>
+<div id="shapePropertiesSlot">
+<div id="shapeProperties" hidden><label>Название<input id="shapeName" maxlength="100"></label>
+<div id="routeProperties" hidden><label>Техника<select id="routeEquipment"></select></label>
+<label>Максимальная глубина<input id="maxDepth" type="number" min="0" max="1000" step="0.1" value="5"></label>
+<label>Максимальный перепад между ячейками<input id="maxSlope" type="number" min="0" max="1000" step="0.1" value="2"></label></div>
+<div id="routeClearances" hidden><label>Отступ от границы, ед. карты<input id="boundaryClearance" type="number" min="1" max="1000" step="1" value="5"></label><label>От центра арукомаркера, ед. карты<input id="markerClearance" type="number" min="24" max="1000" step="1" value="40"></label></div>
+<button id="applyShape" class="primary">Сохранить фигуру в проект</button></div></div><div id="validation" role="status"></div></aside></div>
+<details id="depthPanel" class="panel" hidden><summary>Карта глубины и автопостроение</summary>
+<div class="controls"><button id="generateDepth" class="primary">Сгенерировать тестовую карту и пути</button><span id="depthSource" class="muted"></span>
+<label>Техника<select id="plannerEquipment"><option value="">Вся моя техника</option></select></label>
+<label>Допустимая глубина<input id="plannerMaxDepth" type="number" min="0" max="1000" step="0.1" value="5"></label><label>Допустимый перепад<input id="plannerMaxSlope" type="number" min="0" max="1000" step="0.1" value="2"></label></div>
+<p class="muted">Транспортная зона — область разрешённого движения. Только самосвал перевозит груз добыча ↔ склад. Бульдозер работает на складе, погрузчик — в добыче; им строится только выезд со своей базы на зарядку и обратно. Самосвал тоже ездит на зарядку со склада. Приоритет: минимальный наибольший перепад, затем суммарные перепады, затем длина.</p>
+<p class="muted">Глубина и перепад заданы в условных единицах. Это редактируемая модель, не измерение камеры. Красные ячейки — препятствия. Маршрут проверяется по каждой пересечённой ячейке, включая границы.</p>
+<div class="controls"><label><input id="paintMode" type="checkbox"> Рисовать глубину</label><label><input id="showDepth" type="checkbox" checked> Показывать сетку глубин</label>
+<label>Глубина кисти<input id="paintValue" type="number" min="0" max="1000" step="0.1" value="1"></label><label><input id="paintBlocked" type="checkbox"> Препятствие</label>
+<label>Столбцы<input id="depthCols" type="number" min="2" max="100" value="20"></label><label>Строки<input id="depthRows" type="number" min="2" max="100" value="14"></label><button id="resizeDepth">Новая сетка</button>
+<button id="exportDepth">Скачать JSON глубин</button><label class="file-button">Загрузить JSON<input id="importDepth" type="file" accept=".json,application/json"></label></div>
+<div class="controls"><label>Отступ от границы<input id="plannerBoundaryClearance" type="number" min="1" max="1000" step="1" value="5"></label><label>От центра арукомаркера<input id="plannerMarkerClearance" type="number" min="24" max="1000" step="1" value="40"></label></div><p class="muted">Отступы заданы в единицах карты 1000×700 для всей линии движения. Выберите их с учётом габаритов техники и запаса. Арукомаркеры границ и зон объезжаются; при недостатке места проезд запрещён.</p>
+</details><details id="routeLegend" hidden><summary>Техника и траектории</summary><p class="muted">Наведите курсор на карточку или нажмите её, чтобы показать точки путей.</p><div id="routeLegendItems"></div></details></div></div>
+<div id="editorBottom"><div id="zonePropertiesDock"></div><div id="editorToolsBottom" class="controls"><button id="undo">↶ Отменить</button><button id="finishShape">Замкнуть границу</button><button id="deleteVertex" disabled>Удалить вершину</button><button id="clearShape">Очистить фигуру</button><span id="zoneChecklist" class="muted"></span></div></div></section>
+</section>
+<div id="pageActions"><footer id="actions"><button id="back">← Назад</button><button id="openTutorial">Обучение</button><details id="downloadMenu"><summary>Скачать ▾</summary><div><button id="exportMarkers">Арукомаркеры · PDF</button><button id="exportWorkspace">Проект · JSON</button></div></details><button id="save">Сохранить на сервере</button><button id="next" class="primary">Далее →</button></footer></div>
+</main>
+<div id="notificationCenter" aria-label="Уведомления"><div id="message" class="notification" role="status" hidden><span id="notificationIcon" aria-hidden="true">i</span><div><strong id="notificationTitle">Сообщение</strong><p id="messageText"></p></div><button id="dismissNotification" aria-label="Закрыть уведомление">✕</button></div></div>
+<dialog id="stageTutorial" aria-labelledby="tutorialTitle" aria-describedby="tutorialIntro"><div class="tutorial-heading"><span id="tutorialStage" class="muted"></span><button id="tutorialClose" aria-label="Закрыть обучение">✕</button></div><h2 id="tutorialTitle"></h2><div class="tutorial-body"><div id="tutorialAnimation" aria-hidden="true"></div><div><p id="tutorialIntro"></p><ol id="tutorialSteps"></ol></div></div><p id="tutorialError" role="alert" hidden></p><div class="tutorial-footer"><span class="muted">Повторить можно кнопкой «Обучение» внизу.</span><button id="tutorialContinue" class="primary" autofocus>Понятно, начать</button></div></dialog>
+<dialog id="polygonPreview" aria-labelledby="polygonPreviewTitle"><div class="polygon-preview-heading"><h2 id="polygonPreviewTitle">Полный полигон</h2><button id="closePolygonPreview" autofocus>Закрыть просмотр</button></div><p id="polygonPreviewInfo" class="muted"></p><svg id="polygonPreviewMap" viewBox="-50 -50 1140 800" role="img" aria-label="Полный вид границы и зон полигона"></svg><div class="polygon-preview-legend"><span style="--zone-color:#94a3b8">Граница</span><span style="--zone-color:#60a5fa">Транспортная зона</span><span style="--zone-color:#c4b5fd">Склад</span><span style="--zone-color:#4ade80">Зарядная станция</span><span style="--zone-color:#fb923c">Добыча</span></div></dialog>
+<div id="mapContextMenu" role="menu" aria-label="Действия с фигурой" hidden><button id="contextFinishShape" role="menuitem">Замкнуть фигуру</button></div>
+</body></html>

@@ -1,0 +1,36 @@
+{
+  "dependencies": {
+    "@mujoco/mujoco": "^4.0.1",
+    "js-aruco2": "^2.0.0",
+    "jspdf": "^4.2.1",
+    "selfsigned": "^5.5.0",
+    "three": "^0.187.0"
+  },
+  "name": "equipment-aruco",
+  "private": true,
+  "scripts": {
+    "publish": "node check-github.cjs",
+    "start": "node server.cjs",
+    "build": "node build.cjs",
+    "generate": "python generate_dict.py",
+    "test": "python test.py",
+    "test:browser": "node test_browser.cjs",
+    "test:polygon": "node test_polygon.cjs",
+    "test:server": "node test_server.cjs",
+    "test:hosting": "node test_browser.cjs --dist && node test_polygon.cjs --dist",
+    "test:pages": "node test_browser.cjs --dist --subpath && node test_polygon.cjs --dist --subpath",
+    "test:setup": "node --test test_setup.cjs",
+    "test:charging": "node test_charging.cjs",
+    "test:truck": "node test_truck.cjs",
+    "test:ar": "node test_ar.cjs",
+    "test:firmware": "node test_firmware.cjs",
+    "test:oneshot": "node --test test_oneshot.cjs",
+    "test:robots-scope": "node --test test_robots_polygon_scope.cjs",
+    "test:robots-local": "node --test test_robots_local_software.cjs",
+    "test:device-token-sync": "node --test test_device_token_sync.cjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "playwright": "^1.65.1"
+  }
+}
